@@ -37,3 +37,16 @@ footer { text-align: center; padding: 20px; color: #777; }
 [hidden] { display: none !important; }
 @media (max-width: 768px) { .product-grid { grid-template-columns: repeat(2,1fr); } .cart-section { overflow-x: auto; } }
 @media (max-width: 480px) { .product-grid { grid-template-columns: 1fr; } }
+
+/* Step 7: Improve focus visibility, messages and small-screen readability */
+button:focus-visible, input:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+#payment-message:empty { display: none; }
+#payment-message:not(:empty) { padding: 10px 12px; border-radius: 5px; }
+#payment-message.error { background: #fef2f2; }
+#payment-message.success { background: #f0fdf4; }
+#receipt table { min-width: 430px; }
+@media (max-width: 480px) {
+  section { padding: 18px; }
+  .container { padding: 0 12px; }
+  .summary-section h3 { font-size: 20px; }
+}

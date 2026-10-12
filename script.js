@@ -11,7 +11,7 @@ let cart = [];
 let paymentCompleted = false;
 
 function formatPrice(amount) {
-  return "₱" + amount.toFixed(2);
+  return "₱" + amount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 // 2. Show all six products
@@ -34,6 +34,7 @@ function addToCart(productId) {
   if (existingItem) existingItem.quantity++;
   else cart.push({ ...product, quantity: 1 });
   displayCart();
+  clearPendingPaymentMessage();
 }
 
 function increaseQuantity(productId) {
@@ -41,6 +42,7 @@ function increaseQuantity(productId) {
   const item = cart.find(item => item.id === productId);
   if (item) item.quantity++;
   displayCart();
+  clearPendingPaymentMessage();
 }
 
 function decreaseQuantity(productId) {
@@ -48,12 +50,14 @@ function decreaseQuantity(productId) {
   const item = cart.find(item => item.id === productId);
   if (item && item.quantity > 1) item.quantity--;
   displayCart();
+  clearPendingPaymentMessage();
 }
 
 function removeItem(productId) {
   if (paymentCompleted) return;
   cart = cart.filter(item => item.id !== productId);
   displayCart();
+  clearPendingPaymentMessage();
 }
 
 // 4. Calculate totals from the cart (never from displayed text)
@@ -98,6 +102,10 @@ function displayCart() {
 }
 
 // 5. Cash payment: validate before confirming
+function clearPendingPaymentMessage() {
+  if (!paymentCompleted) showPaymentMessage("", "");
+}
+
 function showPaymentMessage(message, type) {
   const element = document.getElementById("payment-message");
   element.textContent = message;
@@ -120,7 +128,7 @@ function confirmPayment() {
   }
   // Require a plain non-negative decimal with at most 2 decimal places.
   // This rejects text, negative values, and amounts with extra decimals.
-  if (Number(rawPayment) < 0) {
+  if (/^-/.test(rawPayment)) {
     showPaymentMessage("Payment amount cannot be negative.", "error");
     return;
   }
@@ -132,7 +140,7 @@ function confirmPayment() {
   // Work in centavos to avoid floating-point change errors.
   const paidCentavos = Math.round(Number(rawPayment) * 100);
   const dueCentavos = Math.round(totalAmount * 100);
-  if (!Number.isSafeInteger(paidCentavos)) {
+  if (!Number.isSafeInteger(paidCentavos) || paidCentavos < 0) {
     showPaymentMessage("Payment amount is too large.", "error");
     return;
   }
@@ -142,7 +150,8 @@ function confirmPayment() {
   }
 
   const amountPaid = paidCentavos / 100;
-  const change = (paidCentavos - dueCentavos) / 100;
+  const changeCentavos = paidCentavos - dueCentavos;
+  const change = changeCentavos / 100;
   paymentCompleted = true;
   paymentInput.disabled = true;
   document.getElementById("confirm-payment").disabled = true;
@@ -155,7 +164,7 @@ function confirmPayment() {
 // 6. Create a receipt only after a successful payment
 function generateReceipt(amountPaid, change) {
   if (!paymentCompleted) return;
-  const reference = "SS-" + Date.now() + "-" + Math.floor(Math.random() * 100000);
+  const reference = "SS-" + Date.now() + "-" + Math.floor(Math.random() * 100000); // Local demo reference; not a database ID
   const dateTime = new Date().toLocaleString("en-PH");
   const { totalAmount } = calculateTotals();
   let rows = "";
